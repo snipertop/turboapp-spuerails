@@ -35,7 +35,8 @@ class MessagesController < ApplicationController
           render turbo_stream: [
             turbo_stream.update("new_message", partial: "messages/form", locals: {message: Message.new}),
             turbo_stream.prepend("messages", partial: "messages/message", locals: {message: @message}),
-            turbo_stream.update("message_counter", html: "#{Message.count}")
+            turbo_stream.update("message_counter", html: "#{Message.count}"),
+            turbo_stream.update("notice", "Message #{@message.id} created")
           ]
         end
         format.html { redirect_to message_url(@message), notice: "Message was successfully created." }
@@ -57,8 +58,9 @@ class MessagesController < ApplicationController
     respond_to do |format|
       if @message.update(message_params)
         format.turbo_stream do
-          render turbo_stream: turbo_stream.update(@message, 
-            partial:"messages/message", locals: { message: @message })
+          render turbo_stream: [turbo_stream.update(@message, partial:"messages/message", locals: { message: @message }),
+            turbo_stream.update("notice", "Message #{@message.id} updated")
+          ]
         end
         format.html { redirect_to message_url(@message), notice: "Message was successfully updated." }
         format.json { render :show, status: :ok, location: @message }
@@ -79,8 +81,11 @@ class MessagesController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do 
-        render turbo_stream: [ turbo_stream.remove(@message), 
-              turbo_stream.update("message_counter", Message.count)]
+        render turbo_stream: [ 
+          turbo_stream.remove(@message), 
+          turbo_stream.update("message_counter", Message.count),
+          turbo_stream.update("notice", "Message #{@message.id} deleted")
+        ]
       end
       format.html { redirect_to messages_url, notice: "Message was successfully destroyed." }
       format.json { head :no_content }
